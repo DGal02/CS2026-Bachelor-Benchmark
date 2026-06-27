@@ -4,7 +4,7 @@ import os
 import time
 import redis
 from benchmark.helper import load_data, generate_key, get_data, get_result_path, generate_key_mix, generate_queue_key
-from benchmark.config.parameters import ITERATIONS, ITERATIONS_JSON_QUEUE_INSERTS
+from benchmark.config.parameters import ITERATIONS, ITERATIONS_JSON_QUEUE_INSERTS, TEST_CATEGORY
 
 data = load_data()
 
@@ -185,12 +185,25 @@ def test_queue():
             writer.writerow([i, 'pop', elapsed])
 
 
+INSERT_TESTS = [test_insert]
+READ_TESTS = [test_read]
+UPDATE_TESTS = [test_update]
+DELETE_TESTS = [test_delete]
+MIX_TESTS = [test_mix_50w_50r, test_mix_90w_10r, test_mix_10w_90r]
+QUEUE_TESTS = [test_queue]
+
+TEST_CATEGORIES = [INSERT_TESTS, READ_TESTS, UPDATE_TESTS, DELETE_TESTS, MIX_TESTS, QUEUE_TESTS]
+
+CATEGORIES = {
+    'insert': INSERT_TESTS,
+    'read':   READ_TESTS,
+    'update': UPDATE_TESTS,
+    'delete': DELETE_TESTS,
+    'mix':    MIX_TESTS,
+    'queue':  QUEUE_TESTS,
+}
+
 if __name__ == '__main__':
-    test_insert()
-    test_read()
-    test_update()
-    test_delete()
-    test_mix_50w_50r()
-    test_mix_90w_10r()
-    test_mix_10w_90r()
-    test_queue()
+    tests = CATEGORIES[TEST_CATEGORY] if TEST_CATEGORY in CATEGORIES else [t for g in TEST_CATEGORIES for t in g]
+    for test in tests:
+        test()
