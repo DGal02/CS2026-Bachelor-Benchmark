@@ -7,6 +7,8 @@ from benchmark.helper import load_data, generate_key, get_data, get_result_path,
 iterations = int(os.environ.get('ITERATIONS', 10000))
 data_size = os.environ.get('DATA_SIZE', 'small')
 test_result_folder = os.environ.get('TEST_RESULT_FOLDER', 'default')
+max_workers = int(os.environ.get('MAX_WORKERS', 1))
+process_index = int(os.environ.get('PROCESS_INDEX', 0))
 
 data = load_data(data_size)
 
@@ -17,7 +19,7 @@ client = redis.Redis(
 
 
 def test_insert():
-    result_path = get_result_path(test_result_folder, 'redis-insert')
+    result_path = get_result_path(test_result_folder, max_workers, process_index, 'redis-insert')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
@@ -32,7 +34,7 @@ def test_insert():
 
 
 def test_read():
-    result_path = get_result_path(test_result_folder, 'redis-read')
+    result_path = get_result_path(test_result_folder, max_workers, process_index, 'redis-read')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
@@ -46,7 +48,7 @@ def test_read():
 
 
 def test_update():
-    result_path = get_result_path(test_result_folder, 'redis-update')
+    result_path = get_result_path(test_result_folder, max_workers, process_index, 'redis-update')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
@@ -61,7 +63,7 @@ def test_update():
 
 
 def test_delete():
-    result_path = get_result_path(test_result_folder, 'redis-delete')
+    result_path = get_result_path(test_result_folder, max_workers, process_index, 'redis-delete')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
@@ -75,7 +77,7 @@ def test_delete():
 
 
 def test_mix_50w_50r():
-    result_path = get_result_path(test_result_folder, 'redis-mix_50W_50R')
+    result_path = get_result_path(test_result_folder, max_workers, process_index, 'redis-mix_50W_50R')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
@@ -95,7 +97,7 @@ def test_mix_50w_50r():
 
 
 def test_mix_90w_10r():
-    result_path = get_result_path(test_result_folder, 'redis-mix_90W_10R')
+    result_path = get_result_path(test_result_folder, max_workers, process_index, 'redis-mix_90W_10R')
 
     write_counter = 0
     read_counter = 0
@@ -122,7 +124,7 @@ def test_mix_90w_10r():
 
 
 def test_mix_10w_90r():
-    result_path = get_result_path(test_result_folder, 'redis-mix_10W_90R')
+    result_path = get_result_path(test_result_folder, max_workers, process_index, 'redis-mix_10W_90R')
 
     write_counter = iterations * 9 // 10
     read_counter = iterations // 10

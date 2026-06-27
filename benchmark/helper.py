@@ -21,8 +21,7 @@ def generate_key_mix(index):
 def get_data(data, index):
     return data[index % ARRAY_SIZE]
 
-def get_result_path(test_result_folder, test_name):
-    result_dir = f'testResult/{test_result_folder}'
+def get_result_path(test_result_folder, max_workers, process_index, test_name):
+    result_dir = f'testResult/{test_result_folder}/workers-{max_workers}'
     os.makedirs(result_dir, exist_ok=True)
-    
-    return f'{result_dir}/{test_name}.csv'
+    return f'{result_dir}/{test_name}-{process_index}.csv'
