@@ -165,7 +165,7 @@ def test_queue():
                 message = json.dumps({
                     'sender': 'test@test.pl',
                     'receiver': receiver,
-                    'message': f'Hello {receiver}',
+                    'message': f'Hello {receiver}.{get_data(data, push_counter)}.',
                 })
                 t0 = time.perf_counter()
                 client.rpush(queue_key, message)
