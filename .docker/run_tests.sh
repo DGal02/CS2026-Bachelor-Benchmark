@@ -28,7 +28,7 @@ run_category() {
               -e MAX_WORKERS="$count" \
               -e PROCESS_INDEX="$i" \
               -e TEST_CATEGORY="$category" \
-              magisterka-app python benchmark/redis-test.py &
+              magisterka-app python benchmark/redis_test.py &
             pids="$pids $!"
             i=$((i + 1))
         done
