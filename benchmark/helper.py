@@ -4,6 +4,7 @@ import numpy as np
 from benchmark.config.parameters import ARRAY_SIZE
 
 key_prefix = 'benchmark'
+key_mix_prefix = 'mix'
 
 def load_data(data_size):
     data_path = f'benchmark/data/{data_size}.json'
@@ -13,6 +14,9 @@ def load_data(data_size):
 
 def generate_key(index):
     return key_prefix + str(index)
+
+def generate_key_mix(index):
+    return key_mix_prefix + str(index)
 
 def get_data(data, index):
     return data[index % ARRAY_SIZE]
