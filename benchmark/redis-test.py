@@ -17,7 +17,6 @@ client = redis.Redis(
     port=int(os.environ.get('REDIS_PORT', 6379)),
 )
 
-client.flushdb()
 
 def test_insert():
     result_path = get_result_path(test_result_folder, 'redis-insert')
@@ -26,10 +25,40 @@ def test_insert():
         writer = csv.writer(csv_file)
         writer.writerow(['index', 'elapsed_ms'])
         for i in range(iterations):
+            key = generate_key(i)
+            payload = get_data(data, i)
             t0 = time.perf_counter()
-            client.set(generate_key(i), get_data(data, i))
+            client.set(key, payload)
+            elapsed = (time.perf_counter() - t0) * 1000
+            writer.writerow([i, elapsed])
+
+def test_read():
+    result_path = get_result_path(test_result_folder, 'redis-read')
+
+    with open(result_path, 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(['index', 'elapsed_ms'])
+        for i in range(iterations):
+            key = generate_key(i)
+            t0 = time.perf_counter()
+            client.get(key)
+            elapsed = (time.perf_counter() - t0) * 1000
+            writer.writerow([i, elapsed])
+
+def test_delete():
+    result_path = get_result_path(test_result_folder, 'redis-delete')
+
+    with open(result_path, 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(['index', 'elapsed_ms'])
+        for i in range(iterations):
+            key = generate_key(i)
+            t0 = time.perf_counter()
+            client.delete(key)
             elapsed = (time.perf_counter() - t0) * 1000
             writer.writerow([i, elapsed])
 
 if __name__ == '__main__':
     test_insert()
+    test_read()
+    test_delete()
