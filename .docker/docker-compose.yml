@@ -16,11 +16,12 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:8-alpine
+    image: redis/redis-stack-server:latest
     container_name: magisterka-redis
     ports:
       - "6379:6379"
-    command: ["redis-server", "--appendonly", "yes"]
+    environment:
+      REDIS_ARGS: "--appendonly yes"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s

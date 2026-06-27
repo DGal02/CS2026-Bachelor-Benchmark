@@ -1,6 +1,7 @@
 import os
 
 ARRAY_SIZE = 1000
+ITERATIONS_JSON_QUEUE_INSERTS = 10000
 ITERATIONS = int(os.environ.get('ITERATIONS', 10000))
 DATA_SIZE = os.environ.get('DATA_SIZE', 'small')
 TEST_RESULT_FOLDER = os.environ.get('TEST_RESULT_FOLDER', 'default')

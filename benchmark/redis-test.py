@@ -1,9 +1,10 @@
 import csv
+import json
 import os
 import time
 import redis
-from benchmark.helper import load_data, generate_key, get_data, get_result_path, generate_key_mix
-from benchmark.config.parameters import ITERATIONS
+from benchmark.helper import load_data, generate_key, get_data, get_result_path, generate_key_mix, generate_queue_key
+from benchmark.config.parameters import ITERATIONS, ITERATIONS_JSON_QUEUE_INSERTS
 
 data = load_data()
 
@@ -146,6 +147,44 @@ def test_mix_10w_90r():
                 read_counter += 1
 
 
+
+def test_queue():
+    result_path = get_result_path('redis-queue')
+    queue_key = generate_queue_key()
+    push_counter = 0
+    phase1_ops = ITERATIONS_JSON_QUEUE_INSERTS * 3 // 2
+    remaining = ITERATIONS_JSON_QUEUE_INSERTS - ITERATIONS_JSON_QUEUE_INSERTS // 2
+
+    with open(result_path, 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(['index', 'operation', 'elapsed_ms'])
+
+        for i in range(phase1_ops):
+            if i % 3 != 2:
+                receiver = f'test{push_counter}@test.pl'
+                message = json.dumps({
+                    'sender': 'test@test.pl',
+                    'receiver': receiver,
+                    'message': f'Hello {receiver}',
+                })
+                t0 = time.perf_counter()
+                client.rpush(queue_key, message)
+                elapsed = (time.perf_counter() - t0) * 1000
+                writer.writerow([i, 'push', elapsed])
+                push_counter += 1
+            else:
+                t0 = time.perf_counter()
+                client.lpop(queue_key)
+                elapsed = (time.perf_counter() - t0) * 1000
+                writer.writerow([i, 'pop', elapsed])
+
+        for i in range(phase1_ops, phase1_ops + remaining):
+            t0 = time.perf_counter()
+            client.lpop(queue_key)
+            elapsed = (time.perf_counter() - t0) * 1000
+            writer.writerow([i, 'pop', elapsed])
+
+
 if __name__ == '__main__':
     test_insert()
     test_read()
@@ -154,3 +193,4 @@ if __name__ == '__main__':
     test_mix_50w_50r()
     test_mix_90w_10r()
     test_mix_10w_90r()
+    test_queue()
