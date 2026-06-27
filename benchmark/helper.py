@@ -12,11 +12,11 @@ def load_data(data_size):
         raw = json.load(f)
     return np.array(raw)
 
-def generate_key(index):
-    return key_prefix + str(index)
+def generate_key(index, process_index=0):
+    return f'{key_prefix}-{process_index}-{index}'
 
-def generate_key_mix(index):
-    return key_mix_prefix + str(index)
+def generate_key_mix(index, process_index=0):
+    return f'{key_mix_prefix}-{process_index}-{index}'
 
 def get_data(data, index):
     return data[index % ARRAY_SIZE]

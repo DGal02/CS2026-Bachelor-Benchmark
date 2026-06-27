@@ -25,7 +25,7 @@ def test_insert():
         writer = csv.writer(csv_file)
         writer.writerow(['index', 'elapsed_ms'])
         for i in range(iterations):
-            key = generate_key(i)
+            key = generate_key(i, process_index)
             payload = get_data(data, i)
             t0 = time.perf_counter()
             client.set(key, payload)
@@ -40,7 +40,7 @@ def test_read():
         writer = csv.writer(csv_file)
         writer.writerow(['index', 'elapsed_ms'])
         for i in range(iterations):
-            key = generate_key(i)
+            key = generate_key(i, process_index)
             t0 = time.perf_counter()
             client.get(key)
             elapsed = (time.perf_counter() - t0) * 1000
@@ -54,7 +54,7 @@ def test_update():
         writer = csv.writer(csv_file)
         writer.writerow(['index', 'elapsed_ms'])
         for i in range(iterations - 1, -1, -1):
-            key = generate_key(i)
+            key = generate_key(i, process_index)
             payload = get_data(data, i)
             t0 = time.perf_counter()
             client.set(key, payload)
@@ -69,7 +69,7 @@ def test_delete():
         writer = csv.writer(csv_file)
         writer.writerow(['index', 'elapsed_ms'])
         for i in range(iterations):
-            key = generate_key(i)
+            key = generate_key(i, process_index)
             t0 = time.perf_counter()
             client.delete(key)
             elapsed = (time.perf_counter() - t0) * 1000
@@ -83,7 +83,7 @@ def test_mix_50w_50r():
         writer = csv.writer(csv_file)
         writer.writerow(['index', 'operation', 'elapsed_ms'])
         for i in range(iterations):
-            key = generate_key_mix(i)
+            key = generate_key_mix(i, process_index)
             payload = get_data(data, i)
             t0 = time.perf_counter()
             client.set(key, payload)
@@ -107,14 +107,14 @@ def test_mix_90w_10r():
         writer.writerow(['index', 'operation', 'elapsed_ms'])
         for i in range(iterations):
             if i % 10 == 9:
-                key = generate_key_mix(read_counter)
+                key = generate_key_mix(read_counter, process_index)
                 t0 = time.perf_counter()
                 client.get(key)
                 elapsed = (time.perf_counter() - t0) * 1000
                 writer.writerow([i, 'read', elapsed])
                 read_counter += 1
             else:
-                key = generate_key_mix(write_counter)
+                key = generate_key_mix(write_counter, process_index)
                 payload = get_data(data, write_counter)
                 t0 = time.perf_counter()
                 client.set(key, payload)
@@ -134,7 +134,7 @@ def test_mix_10w_90r():
         writer.writerow(['index', 'operation', 'elapsed_ms'])
         for i in range(iterations):
             if i % 10 == 0:
-                key = generate_key_mix(write_counter)
+                key = generate_key_mix(write_counter, process_index)
                 payload = get_data(data, write_counter)
                 t0 = time.perf_counter()
                 client.set(key, payload)
@@ -142,7 +142,7 @@ def test_mix_10w_90r():
                 writer.writerow([i, 'write', elapsed])
                 write_counter += 1
             else:
-                key = generate_key_mix(read_counter)
+                key = generate_key_mix(read_counter, process_index)
                 t0 = time.perf_counter()
                 client.get(key)
                 elapsed = (time.perf_counter() - t0) * 1000
