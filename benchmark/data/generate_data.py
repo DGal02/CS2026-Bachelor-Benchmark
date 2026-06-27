@@ -10,9 +10,9 @@ def generate_signal(array_size: int, string_size: int):
 
 
 small_signal = generate_signal(ARRAY_SIZE, 128)
-with open("small.json", "w") as file:
+with open("benchmark/data/small.json", "w") as file:
     json.dump(small_signal, file)
 
 medium_signal = generate_signal(ARRAY_SIZE, 4096)
-with open("medium.json", "w") as file:
+with open("benchmark/data/medium.json", "w") as file:
     json.dump(medium_signal, file)
