@@ -3,14 +3,9 @@ import os
 import time
 import redis
 from benchmark.helper import load_data, generate_key, get_data, get_result_path, generate_key_mix
+from benchmark.config.parameters import ITERATIONS, DATA_SIZE, PROCESS_INDEX
 
-iterations = int(os.environ.get('ITERATIONS', 10000))
-data_size = os.environ.get('DATA_SIZE', 'small')
-test_result_folder = os.environ.get('TEST_RESULT_FOLDER', 'default')
-max_workers = int(os.environ.get('MAX_WORKERS', 1))
-process_index = int(os.environ.get('PROCESS_INDEX', 0))
-
-data = load_data(data_size)
+data = load_data(DATA_SIZE)
 
 client = redis.Redis(
     host=os.environ.get('REDIS_HOST', 'localhost'),
@@ -19,13 +14,13 @@ client = redis.Redis(
 
 
 def test_insert():
-    result_path = get_result_path(test_result_folder, max_workers, process_index, 'redis-insert')
+    result_path = get_result_path('redis-insert')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(['index', 'elapsed_ms'])
-        for i in range(iterations):
-            key = generate_key(i, process_index)
+        for i in range(ITERATIONS):
+            key = generate_key(i, PROCESS_INDEX)
             payload = get_data(data, i)
             t0 = time.perf_counter()
             client.set(key, payload)
@@ -34,13 +29,13 @@ def test_insert():
 
 
 def test_read():
-    result_path = get_result_path(test_result_folder, max_workers, process_index, 'redis-read')
+    result_path = get_result_path('redis-read')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(['index', 'elapsed_ms'])
-        for i in range(iterations):
-            key = generate_key(i, process_index)
+        for i in range(ITERATIONS):
+            key = generate_key(i, PROCESS_INDEX)
             t0 = time.perf_counter()
             client.get(key)
             elapsed = (time.perf_counter() - t0) * 1000
@@ -48,13 +43,13 @@ def test_read():
 
 
 def test_update():
-    result_path = get_result_path(test_result_folder, max_workers, process_index, 'redis-update')
+    result_path = get_result_path('redis-update')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(['index', 'elapsed_ms'])
-        for i in range(iterations - 1, -1, -1):
-            key = generate_key(i, process_index)
+        for i in range(ITERATIONS - 1, -1, -1):
+            key = generate_key(i, PROCESS_INDEX)
             payload = get_data(data, i)
             t0 = time.perf_counter()
             client.set(key, payload)
@@ -63,13 +58,13 @@ def test_update():
 
 
 def test_delete():
-    result_path = get_result_path(test_result_folder, max_workers, process_index, 'redis-delete')
+    result_path = get_result_path('redis-delete')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(['index', 'elapsed_ms'])
-        for i in range(iterations):
-            key = generate_key(i, process_index)
+        for i in range(ITERATIONS):
+            key = generate_key(i, PROCESS_INDEX)
             t0 = time.perf_counter()
             client.delete(key)
             elapsed = (time.perf_counter() - t0) * 1000
@@ -77,13 +72,13 @@ def test_delete():
 
 
 def test_mix_50w_50r():
-    result_path = get_result_path(test_result_folder, max_workers, process_index, 'redis-mix_50W_50R')
+    result_path = get_result_path('redis-mix_50W_50R')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(['index', 'operation', 'elapsed_ms'])
-        for i in range(iterations):
-            key = generate_key_mix(i, process_index)
+        for i in range(ITERATIONS):
+            key = generate_key_mix(i, PROCESS_INDEX)
             payload = get_data(data, i)
             t0 = time.perf_counter()
             client.set(key, payload)
@@ -97,7 +92,7 @@ def test_mix_50w_50r():
 
 
 def test_mix_90w_10r():
-    result_path = get_result_path(test_result_folder, max_workers, process_index, 'redis-mix_90W_10R')
+    result_path = get_result_path('redis-mix_90W_10R')
 
     write_counter = 0
     read_counter = 0
@@ -105,16 +100,16 @@ def test_mix_90w_10r():
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(['index', 'operation', 'elapsed_ms'])
-        for i in range(iterations):
+        for i in range(ITERATIONS):
             if i % 10 == 9:
-                key = generate_key_mix(read_counter, process_index)
+                key = generate_key_mix(read_counter, PROCESS_INDEX)
                 t0 = time.perf_counter()
                 client.get(key)
                 elapsed = (time.perf_counter() - t0) * 1000
                 writer.writerow([i, 'read', elapsed])
                 read_counter += 1
             else:
-                key = generate_key_mix(write_counter, process_index)
+                key = generate_key_mix(write_counter, PROCESS_INDEX)
                 payload = get_data(data, write_counter)
                 t0 = time.perf_counter()
                 client.set(key, payload)
@@ -124,17 +119,17 @@ def test_mix_90w_10r():
 
 
 def test_mix_10w_90r():
-    result_path = get_result_path(test_result_folder, max_workers, process_index, 'redis-mix_10W_90R')
+    result_path = get_result_path('redis-mix_10W_90R')
 
-    write_counter = iterations * 9 // 10
-    read_counter = iterations // 10
+    write_counter = ITERATIONS * 9 // 10
+    read_counter = ITERATIONS // 10
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(['index', 'operation', 'elapsed_ms'])
-        for i in range(iterations):
+        for i in range(ITERATIONS):
             if i % 10 == 0:
-                key = generate_key_mix(write_counter, process_index)
+                key = generate_key_mix(write_counter, PROCESS_INDEX)
                 payload = get_data(data, write_counter)
                 t0 = time.perf_counter()
                 client.set(key, payload)
@@ -142,7 +137,7 @@ def test_mix_10w_90r():
                 writer.writerow([i, 'write', elapsed])
                 write_counter += 1
             else:
-                key = generate_key_mix(read_counter, process_index)
+                key = generate_key_mix(read_counter, PROCESS_INDEX)
                 t0 = time.perf_counter()
                 client.get(key)
                 elapsed = (time.perf_counter() - t0) * 1000
