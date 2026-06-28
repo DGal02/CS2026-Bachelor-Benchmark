@@ -11,11 +11,26 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      MEMCACHED_HOST: memcached
+      MEMCACHED_PORT: 11211
     volumes:
       - ../benchmark:/app/benchmark
       - ../testResult:/app/testResult
     networks:
       - benchmark-net
+    restart: unless-stopped
+
+  memcached:
+    image: memcached:alpine
+    container_name: system-memcached
+    ports:
+      - "11211:11211"
+    networks:
+      - benchmark-net
+    deploy:
+      resources:
+        limits:
+          cpus: "${MAX_CPUS}"
     restart: unless-stopped
 
   redis:
