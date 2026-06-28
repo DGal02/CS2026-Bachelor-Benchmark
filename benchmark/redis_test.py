@@ -3,8 +3,8 @@ import json
 import os
 import time
 import redis
-from benchmark.helper import load_data, generate_key, get_data, get_result_path, generate_key_mix, generate_queue_key, generate_key_doc
-from benchmark.config.parameters import ITERATIONS, ITERATIONS_JSON_QUEUE_INSERTS, ITERATIONS_JSON_DOCUMENT, TEST_CATEGORY
+from benchmark.helper import load_data, generate_key, get_data, get_result_path, generate_key_mix, generate_queue_key, generate_key_doc, run
+from benchmark.config.parameters import ITERATIONS, ITERATIONS_JSON_QUEUE_INSERTS, ITERATIONS_JSON_DOCUMENT
 
 data = load_data()
 
@@ -265,38 +265,20 @@ def test_doc_delete():
             writer.writerow([i, elapsed])
 
 
-INSERT_TESTS = [test_insert]
-READ_TESTS = [test_read]
-UPDATE_TESTS = [test_update]
-DELETE_TESTS = [test_delete]
-MIX_TESTS = [test_mix_50w_50r, test_mix_90w_10r, test_mix_10w_90r]
-QUEUE_TESTS = [test_queue]
-DOC_INSERT_TESTS = [test_doc_insert]
-DOC_READ_TESTS = [test_doc_read]
-DOC_READ_PARTIAL_TESTS = [test_doc_read_partial]
-DOC_UPDATE_PARTIAL_TESTS = [test_doc_update_partial]
-DOC_INCREMENT_TESTS = [test_doc_increment]
-DOC_DELETE_TESTS = [test_doc_delete]
-
-TEST_CATEGORIES = [INSERT_TESTS, READ_TESTS, UPDATE_TESTS, DELETE_TESTS, MIX_TESTS, QUEUE_TESTS,
-                   DOC_INSERT_TESTS, DOC_READ_TESTS, DOC_READ_PARTIAL_TESTS, DOC_UPDATE_PARTIAL_TESTS, DOC_INCREMENT_TESTS, DOC_DELETE_TESTS]
-
 CATEGORIES = {
-    'insert':            INSERT_TESTS,
-    'read':              READ_TESTS,
-    'update':            UPDATE_TESTS,
-    'delete':            DELETE_TESTS,
-    'mix':               MIX_TESTS,
-    'queue':             QUEUE_TESTS,
-    'doc_insert':        DOC_INSERT_TESTS,
-    'doc_read':          DOC_READ_TESTS,
-    'doc_read_partial':  DOC_READ_PARTIAL_TESTS,
-    'doc_update_partial':DOC_UPDATE_PARTIAL_TESTS,
-    'doc_increment':     DOC_INCREMENT_TESTS,
-    'doc_delete':        DOC_DELETE_TESTS,
+    'insert':            [test_insert],
+    'read':              [test_read],
+    'update':            [test_update],
+    'delete':            [test_delete],
+    'mix':               [test_mix_50w_50r, test_mix_90w_10r, test_mix_10w_90r],
+    'queue':             [test_queue],
+    'doc_insert':        [test_doc_insert],
+    'doc_read':          [test_doc_read],
+    'doc_read_partial':  [test_doc_read_partial],
+    'doc_update_partial':[test_doc_update_partial],
+    'doc_increment':     [test_doc_increment],
+    'doc_delete':        [test_doc_delete],
 }
 
 if __name__ == '__main__':
-    tests = CATEGORIES[TEST_CATEGORY] if TEST_CATEGORY in CATEGORIES else [t for g in TEST_CATEGORIES for t in g]
-    for test in tests:
-        test()
+    run(CATEGORIES)
