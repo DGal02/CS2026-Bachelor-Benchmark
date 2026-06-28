@@ -8,13 +8,20 @@ RESULT_DIR="$SCRIPT_DIR/../testResult/$TEST_RESULT_FOLDER"
 #PROCESS_COUNTS="1 2 4 8"
 #ITERATIONS_LIST="10000 100000 1000000"
 #DATA_SIZES="small medium"
-#CATEGORIES="insert read update delete mix"
+#CATEGORIES="insert read update delete mix queue"
 # END OF CHOICES
 
 PROCESS_COUNTS="1"
 ITERATIONS_LIST="10000"
 DATA_SIZES="small"
-CATEGORIES="insert read update delete mix"
+CATEGORIES="insert read update delete mix queue"
+
+contains() {
+    for item in $1; do
+        [ "$item" = "$2" ] && return 0
+    done
+    return 1
+}
 
 run_test() {
     category=$1
@@ -79,11 +86,14 @@ for data_size in $DATA_SIZES; do
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting: data_size=$data_size, iterations=$iterations"
 
         for category in $CATEGORIES; do
+            [ "$category" = "queue" ] && continue
             run_category "$category" "$data_size" "$iterations"
         done
     done
 
-    run_category "queue" "$data_size" "0"
+    if contains "$CATEGORIES" "queue"; then
+        run_category "queue" "$data_size" "0"
+    fi
 done
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] All tests completed."
