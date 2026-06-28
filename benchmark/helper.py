@@ -7,6 +7,7 @@ from benchmark.config.parameters import ARRAY_SIZE, TEST_RESULT_FOLDER, DATA_SIZ
 key_prefix = 'benchmark'
 key_mix_prefix = 'mix'
 key_queue_prefix = 'queue'
+key_doc_prefix = 'doc'
 
 def load_data():
     data_path = f'benchmark/data/{DATA_SIZE}.json'
@@ -22,6 +23,9 @@ def generate_key_mix(index):
 
 def generate_queue_key():
     return f'{key_queue_prefix}-{PROCESS_INDEX}'
+
+def generate_key_doc(index):
+    return f'{key_doc_prefix}-{PROCESS_INDEX}-{index}'
 
 def get_data(data, index):
     return data[index % ARRAY_SIZE]

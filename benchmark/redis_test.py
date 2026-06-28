@@ -3,8 +3,8 @@ import json
 import os
 import time
 import redis
-from benchmark.helper import load_data, generate_key, get_data, get_result_path, generate_key_mix, generate_queue_key
-from benchmark.config.parameters import ITERATIONS, ITERATIONS_JSON_QUEUE_INSERTS, TEST_CATEGORY
+from benchmark.helper import load_data, generate_key, get_data, get_result_path, generate_key_mix, generate_queue_key, generate_key_doc
+from benchmark.config.parameters import ITERATIONS, ITERATIONS_JSON_QUEUE_INSERTS, ITERATIONS_JSON_DOCUMENT, TEST_CATEGORY
 
 data = load_data()
 
@@ -185,22 +185,114 @@ def test_queue():
             writer.writerow([i, 'pop', elapsed])
 
 
+def test_doc_insert():
+    result_path = get_result_path('doc_insert')
+    with open(result_path, 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(['index', 'elapsed_ms'])
+        for i in range(ITERATIONS_JSON_DOCUMENT):
+            key = generate_key_doc(i)
+            doc = {'payload': str(get_data(data, i)), 'counter': 0, 'tags': ['tag0', 'tag1']}
+            t0 = time.perf_counter()
+            client.json().set(key, '$', doc)
+            elapsed = (time.perf_counter() - t0) * 1000
+            writer.writerow([i, elapsed])
+
+
+def test_doc_read():
+    result_path = get_result_path('doc_read')
+    with open(result_path, 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(['index', 'elapsed_ms'])
+        for i in range(ITERATIONS_JSON_DOCUMENT):
+            key = generate_key_doc(i)
+            t0 = time.perf_counter()
+            client.json().get(key)
+            elapsed = (time.perf_counter() - t0) * 1000
+            writer.writerow([i, elapsed])
+
+
+def test_doc_read_partial():
+    result_path = get_result_path('doc_read_partial')
+    with open(result_path, 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(['index', 'elapsed_ms'])
+        for i in range(ITERATIONS_JSON_DOCUMENT):
+            key = generate_key_doc(i)
+            t0 = time.perf_counter()
+            client.json().get(key, '$.payload')
+            elapsed = (time.perf_counter() - t0) * 1000
+            writer.writerow([i, elapsed])
+
+
+def test_doc_update_partial():
+    result_path = get_result_path('doc_update_partial')
+    with open(result_path, 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(['index', 'elapsed_ms'])
+        for i in range(ITERATIONS_JSON_DOCUMENT - 1, -1, -1):
+            key = generate_key_doc(i)
+            t0 = time.perf_counter()
+            client.json().set(key, '$.payload', str(get_data(data, i)))
+            elapsed = (time.perf_counter() - t0) * 1000
+            writer.writerow([i, elapsed])
+
+
+def test_doc_increment():
+    result_path = get_result_path('doc_increment')
+    with open(result_path, 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(['index', 'elapsed_ms'])
+        for i in range(ITERATIONS_JSON_DOCUMENT):
+            key = generate_key_doc(i)
+            t0 = time.perf_counter()
+            client.json().numincrby(key, '$.counter', 1)
+            elapsed = (time.perf_counter() - t0) * 1000
+            writer.writerow([i, elapsed])
+
+
+def test_doc_delete():
+    result_path = get_result_path('doc_delete')
+    with open(result_path, 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(['index', 'elapsed_ms'])
+        for i in range(ITERATIONS_JSON_DOCUMENT):
+            key = generate_key_doc(i)
+            t0 = time.perf_counter()
+            client.json().delete(key)
+            elapsed = (time.perf_counter() - t0) * 1000
+            writer.writerow([i, elapsed])
+
+
 INSERT_TESTS = [test_insert]
 READ_TESTS = [test_read]
 UPDATE_TESTS = [test_update]
 DELETE_TESTS = [test_delete]
 MIX_TESTS = [test_mix_50w_50r, test_mix_90w_10r, test_mix_10w_90r]
 QUEUE_TESTS = [test_queue]
+DOC_INSERT_TESTS = [test_doc_insert]
+DOC_READ_TESTS = [test_doc_read]
+DOC_READ_PARTIAL_TESTS = [test_doc_read_partial]
+DOC_UPDATE_PARTIAL_TESTS = [test_doc_update_partial]
+DOC_INCREMENT_TESTS = [test_doc_increment]
+DOC_DELETE_TESTS = [test_doc_delete]
 
-TEST_CATEGORIES = [INSERT_TESTS, READ_TESTS, UPDATE_TESTS, DELETE_TESTS, MIX_TESTS, QUEUE_TESTS]
+TEST_CATEGORIES = [INSERT_TESTS, READ_TESTS, UPDATE_TESTS, DELETE_TESTS, MIX_TESTS, QUEUE_TESTS,
+                   DOC_INSERT_TESTS, DOC_READ_TESTS, DOC_READ_PARTIAL_TESTS, DOC_UPDATE_PARTIAL_TESTS, DOC_INCREMENT_TESTS, DOC_DELETE_TESTS]
 
 CATEGORIES = {
-    'insert': INSERT_TESTS,
-    'read':   READ_TESTS,
-    'update': UPDATE_TESTS,
-    'delete': DELETE_TESTS,
-    'mix':    MIX_TESTS,
-    'queue':  QUEUE_TESTS,
+    'insert':            INSERT_TESTS,
+    'read':              READ_TESTS,
+    'update':            UPDATE_TESTS,
+    'delete':            DELETE_TESTS,
+    'mix':               MIX_TESTS,
+    'queue':             QUEUE_TESTS,
+    'doc_insert':        DOC_INSERT_TESTS,
+    'doc_read':          DOC_READ_TESTS,
+    'doc_read_partial':  DOC_READ_PARTIAL_TESTS,
+    'doc_update_partial':DOC_UPDATE_PARTIAL_TESTS,
+    'doc_increment':     DOC_INCREMENT_TESTS,
+    'doc_delete':        DOC_DELETE_TESTS,
 }
 
 if __name__ == '__main__':

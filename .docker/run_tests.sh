@@ -8,13 +8,14 @@ RESULT_DIR="$SCRIPT_DIR/../testResult/$TEST_RESULT_FOLDER"
 #PROCESS_COUNTS="1 2 4 8"
 #ITERATIONS_LIST="10000 100000 1000000"
 #DATA_SIZES="small medium"
-#CATEGORIES="insert read update delete mix queue"
+#CATEGORIES="insert read update delete mix queue doc_insert doc_read doc_read_partial doc_update_partial doc_increment doc_delete"
 # END OF CHOICES
 
 PROCESS_COUNTS="1"
 ITERATIONS_LIST="10000"
 DATA_SIZES="small"
-CATEGORIES="insert read update delete mix queue"
+CATEGORIES="insert read update delete mix queue doc_insert doc_read doc_read_partial doc_update_partial doc_increment doc_delete"
+FIXED_CATEGORIES="queue doc_insert doc_read doc_read_partial doc_update_partial doc_increment doc_delete"
 
 contains() {
     for item in $1; do
@@ -86,14 +87,14 @@ for data_size in $DATA_SIZES; do
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting: data_size=$data_size, iterations=$iterations"
 
         for category in $CATEGORIES; do
-            [ "$category" = "queue" ] && continue
+            contains "$FIXED_CATEGORIES" "$category" && continue
             run_category "$category" "$data_size" "$iterations"
         done
     done
 
-    if contains "$CATEGORIES" "queue"; then
-        run_category "queue" "$data_size" "0"
-    fi
+    for category in $FIXED_CATEGORIES; do
+        contains "$CATEGORIES" "$category" && run_category "$category" "$data_size" "0"
+    done
 done
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] All tests completed."
