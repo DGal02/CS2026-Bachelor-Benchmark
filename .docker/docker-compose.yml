@@ -23,8 +23,6 @@ services:
   memcached:
     image: memcached:alpine
     container_name: system-memcached
-    ports:
-      - "11211:11211"
     networks:
       - benchmark-net
     deploy:
@@ -36,8 +34,6 @@ services:
   redis:
     image: redis/redis-stack-server:latest
     container_name: system-redis
-    ports:
-      - "6379:6379"
     environment:
       REDIS_ARGS: "--appendonly yes"
     healthcheck:
