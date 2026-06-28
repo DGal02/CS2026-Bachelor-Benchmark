@@ -20,7 +20,7 @@ services:
 
   redis:
     image: redis/redis-stack-server:latest
-    container_name: magisterka-redis
+    container_name: system-redis
     ports:
       - "6379:6379"
     environment:
@@ -35,5 +35,5 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "${REDIS_CPUS}"
+          cpus: "${MAX_CPUS}"
     restart: unless-stopped

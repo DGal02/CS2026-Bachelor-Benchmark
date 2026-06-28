@@ -1,14 +1,16 @@
 #!/bin/sh
 set -e
 
-TEST_RESULT_FOLDER=$(date '+%Y-%m-%d-%H-%M-%S')
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULT_DIR="$SCRIPT_DIR/../testResult/$TEST_RESULT_FOLDER"
 
+# CHOICES
 #PROCESS_COUNTS="1 2 4 8"
 #ITERATIONS_LIST="10000 100000 1000000"
 #DATA_SIZES="small medium"
 #CATEGORIES="insert read update delete mix"
+# END OF CHOICES
+
 PROCESS_COUNTS="1"
 ITERATIONS_LIST="10000"
 DATA_SIZES="small"
@@ -26,7 +28,7 @@ run_test() {
     echo "timestamp,container,cpu_perc,mem_usage,mem_perc" > "$stats_dir/stats.csv"
     while true; do
         ts=$(date '+%Y-%m-%d %H:%M:%S')
-        docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.MemPerc}}" python-app magisterka-redis 2>/dev/null | while IFS= read -r line; do
+        docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.MemPerc}}" python-app "system-$SYSTEM" 2>/dev/null | while IFS= read -r line; do
             echo "$ts,$line"
         done >> "$stats_dir/stats.csv"
         sleep 0.2
@@ -43,7 +45,7 @@ run_test() {
           -e MAX_WORKERS="$count" \
           -e PROCESS_INDEX="$i" \
           -e TEST_CATEGORY="$category" \
-          python-app python benchmark/redis_test.py &
+          python-app python "benchmark/${SYSTEM}_test.py" &
         pids="$pids $!"
         i=$((i + 1))
     done

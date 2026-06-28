@@ -15,7 +15,7 @@ client = redis.Redis(
 
 
 def test_insert():
-    result_path = get_result_path('redis-insert')
+    result_path = get_result_path('insert')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
@@ -30,7 +30,7 @@ def test_insert():
 
 
 def test_read():
-    result_path = get_result_path('redis-read')
+    result_path = get_result_path('read')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
@@ -44,7 +44,7 @@ def test_read():
 
 
 def test_update():
-    result_path = get_result_path('redis-update')
+    result_path = get_result_path('update')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
@@ -59,7 +59,7 @@ def test_update():
 
 
 def test_delete():
-    result_path = get_result_path('redis-delete')
+    result_path = get_result_path('delete')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
@@ -73,7 +73,7 @@ def test_delete():
 
 
 def test_mix_50w_50r():
-    result_path = get_result_path('redis-mix_50W_50R')
+    result_path = get_result_path('mix_50W_50R')
 
     with open(result_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
@@ -93,7 +93,7 @@ def test_mix_50w_50r():
 
 
 def test_mix_90w_10r():
-    result_path = get_result_path('redis-mix_90W_10R')
+    result_path = get_result_path('mix_90W_10R')
 
     write_counter = 0
     read_counter = 0
@@ -120,7 +120,7 @@ def test_mix_90w_10r():
 
 
 def test_mix_10w_90r():
-    result_path = get_result_path('redis-mix_10W_90R')
+    result_path = get_result_path('mix_10W_90R')
 
     write_counter = ITERATIONS * 9 // 10
     read_counter = ITERATIONS // 10
@@ -149,7 +149,7 @@ def test_mix_10w_90r():
 
 
 def test_queue():
-    result_path = get_result_path('redis-queue')
+    result_path = get_result_path('queue')
     queue_key = generate_queue_key()
     push_counter = 0
     phase1_ops = ITERATIONS_JSON_QUEUE_INSERTS * 3 // 2
