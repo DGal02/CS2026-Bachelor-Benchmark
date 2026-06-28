@@ -18,6 +18,7 @@ for max_cpus in $MAX_CPUS_LIST; do
     $COMPOSE up -d app
     $COMPOSE up -d "$SYSTEM"
 
+    sleep 5
     sh "$SCRIPT_DIR/run_tests.sh"
 
     result_dir="$SCRIPT_DIR/../testResult/$TEST_RESULT_FOLDER"
@@ -29,6 +30,7 @@ for max_cpus in $MAX_CPUS_LIST; do
 }
 EOF
 
+    sleep 5
     $COMPOSE down
 
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Done: MAX_CPUS=$max_cpus, folder=$TEST_RESULT_FOLDER ==="

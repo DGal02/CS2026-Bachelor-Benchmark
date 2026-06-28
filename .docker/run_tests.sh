@@ -32,10 +32,10 @@ run_test() {
     stats_dir="$RESULT_DIR/$data_size/$iterations/workers-$count"
     mkdir -p "$stats_dir"
 
-    echo "timestamp,container,cpu_perc,mem_usage,mem_perc" > "$stats_dir/stats.csv"
+    echo "timestamp,container,cpu_perc,mem_usage" > "$stats_dir/stats.csv"
     while true; do
         ts=$(date '+%Y-%m-%d %H:%M:%S')
-        docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.MemPerc}}" python-app "system-$SYSTEM" 2>/dev/null | while IFS= read -r line; do
+        docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemUsage}}" python-app "system-$SYSTEM" 2>/dev/null | while IFS= read -r line; do
             echo "$ts,$line"
         done >> "$stats_dir/stats.csv"
         sleep 0.2
