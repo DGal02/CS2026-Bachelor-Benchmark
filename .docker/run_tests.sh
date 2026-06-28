@@ -15,6 +15,7 @@ PROCESS_COUNTS="1"
 ITERATIONS_LIST="10000"
 DATA_SIZES="small"
 CATEGORIES="insert read update delete mix queue doc_insert doc_read doc_read_partial doc_update_partial doc_increment doc_delete"
+
 FIXED_CATEGORIES="mix queue doc_insert doc_read doc_read_partial doc_update_partial doc_increment doc_delete"
 
 contains() {
@@ -33,13 +34,12 @@ run_test() {
     stats_dir="$RESULT_DIR/$data_size/$iterations/workers-$count"
     mkdir -p "$stats_dir"
 
-    echo "timestamp,container,cpu_perc,mem_usage" > "$stats_dir/stats.csv"
+    echo "timestamp,container,cpu_perc,mem_usage,block_io" > "$stats_dir/stats_${category}.csv"
     while true; do
         ts=$(date '+%Y-%m-%d %H:%M:%S')
-        docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemUsage}}" python-app "system-$SYSTEM" 2>/dev/null | while IFS= read -r line; do
+        docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.BlockIO}}" python-app "system-$SYSTEM" 2>/dev/null | while IFS= read -r line; do
             echo "$ts,$line"
-        done >> "$stats_dir/stats.csv"
-        sleep 0.2
+        done >> "$stats_dir/stats_${category}.csv"
     done &
     monitor_pid=$!
 
