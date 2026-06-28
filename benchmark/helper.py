@@ -35,6 +35,10 @@ def get_result_path(test_name):
     os.makedirs(result_dir, exist_ok=True)
     return f'{result_dir}/{test_name}-{PROCESS_INDEX}.csv'
 
+def flush(writer, rows):
+    writer.writerows(rows)
+    rows.clear()
+
 def run(categories):
     tests = categories[TEST_CATEGORY] if TEST_CATEGORY in categories else [t for group in categories.values() for t in group]
     for test in tests:

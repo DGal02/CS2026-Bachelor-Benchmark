@@ -23,6 +23,7 @@ services:
   memcached:
     image: memcached:alpine
     container_name: system-memcached
+    command: memcached -I 2m
     networks:
       - benchmark-net
     deploy:
