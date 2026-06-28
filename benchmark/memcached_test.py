@@ -23,14 +23,14 @@ def test_insert():
     rows = []
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['index', 'elapsed_ms'])
+        writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS):
             key = generate_key(i)
             payload = str(get_data(data, i))
             t0 = time.perf_counter()
             client.set(key, payload)
             elapsed = (time.perf_counter() - t0) * 1000
-            rows.append([i, elapsed])
+            rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
         flush(writer, rows)
@@ -41,13 +41,13 @@ def test_read():
     rows = []
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['index', 'elapsed_ms'])
+        writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS):
             key = generate_key(i)
             t0 = time.perf_counter()
             client.get(key)
             elapsed = (time.perf_counter() - t0) * 1000
-            rows.append([i, elapsed])
+            rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
         flush(writer, rows)
@@ -58,14 +58,14 @@ def test_update():
     rows = []
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['index', 'elapsed_ms'])
+        writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS - 1, -1, -1):
             key = generate_key(i)
             payload = str(get_data(data, i))
             t0 = time.perf_counter()
             client.set(key, payload)
             elapsed = (time.perf_counter() - t0) * 1000
-            rows.append([i, elapsed])
+            rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
         flush(writer, rows)
@@ -76,13 +76,13 @@ def test_delete():
     rows = []
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['index', 'elapsed_ms'])
+        writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS):
             key = generate_key(i)
             t0 = time.perf_counter()
             client.delete(key)
             elapsed = (time.perf_counter() - t0) * 1000
-            rows.append([i, elapsed])
+            rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
         flush(writer, rows)
@@ -93,7 +93,7 @@ def test_mix_50w_50r():
     rows = []
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['index', 'operation', 'elapsed_ms'])
+        writer.writerow(['operation', 'elapsed_ms'])
         for i in range(ITERATIONS):
             key = generate_key_mix(i)
             payload = str(get_data(data, i))
@@ -103,8 +103,8 @@ def test_mix_50w_50r():
             t1 = time.perf_counter()
             client.get(key)
             elapsed_read = (time.perf_counter() - t1) * 1000
-            rows.append([i, 'write', elapsed_write])
-            rows.append([i, 'read', elapsed_read])
+            rows.append(['write', elapsed_write])
+            rows.append(['read', elapsed_read])
             client.delete(key)
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
@@ -118,14 +118,14 @@ def test_mix_90w_10r():
     read_counter = 0
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['index', 'operation', 'elapsed_ms'])
+        writer.writerow(['operation', 'elapsed_ms'])
         for i in range(ITERATIONS):
             if i % 10 == 9:
                 key = generate_key_mix(read_counter)
                 t0 = time.perf_counter()
                 client.get(key)
                 elapsed = (time.perf_counter() - t0) * 1000
-                rows.append([i, 'read', elapsed])
+                rows.append(['read', elapsed])
                 read_counter += 1
             else:
                 key = generate_key_mix(write_counter)
@@ -133,7 +133,7 @@ def test_mix_90w_10r():
                 t0 = time.perf_counter()
                 client.set(key, payload)
                 elapsed = (time.perf_counter() - t0) * 1000
-                rows.append([i, 'write', elapsed])
+                rows.append(['write', elapsed])
                 write_counter += 1
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
@@ -147,7 +147,7 @@ def test_mix_10w_90r():
     read_counter = ITERATIONS // 10
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['index', 'operation', 'elapsed_ms'])
+        writer.writerow(['operation', 'elapsed_ms'])
         for i in range(ITERATIONS):
             if i % 10 == 0:
                 key = generate_key_mix(write_counter)
@@ -155,14 +155,14 @@ def test_mix_10w_90r():
                 t0 = time.perf_counter()
                 client.set(key, payload)
                 elapsed = (time.perf_counter() - t0) * 1000
-                rows.append([i, 'write', elapsed])
+                rows.append(['write', elapsed])
                 write_counter += 1
             else:
                 key = generate_key_mix(read_counter)
                 t0 = time.perf_counter()
                 client.get(key)
                 elapsed = (time.perf_counter() - t0) * 1000
-                rows.append([i, 'read', elapsed])
+                rows.append(['read', elapsed])
                 client.delete(key)
                 read_counter += 1
             if len(rows) >= FLUSH_EVERY:
@@ -180,7 +180,7 @@ def test_queue():
     client.set(queue_key, json.dumps([]))
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['index', 'operation', 'elapsed_ms'])
+        writer.writerow(['operation', 'elapsed_ms'])
         for i in range(phase1_ops):
             if i % 3 != 2:
                 receiver = f'test{push_counter}@test.pl'
@@ -194,7 +194,7 @@ def test_queue():
                 queue.append(message)
                 client.set(queue_key, json.dumps(queue))
                 elapsed = (time.perf_counter() - t0) * 1000
-                rows.append([i, 'push', elapsed])
+                rows.append(['push', elapsed])
                 push_counter += 1
             else:
                 t0 = time.perf_counter()
@@ -202,7 +202,7 @@ def test_queue():
                 queue.pop(0)
                 client.set(queue_key, json.dumps(queue))
                 elapsed = (time.perf_counter() - t0) * 1000
-                rows.append([i, 'pop', elapsed])
+                rows.append(['pop', elapsed])
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
         for i in range(phase1_ops, phase1_ops + remaining):
@@ -211,7 +211,7 @@ def test_queue():
             queue.pop(0)
             client.set(queue_key, json.dumps(queue))
             elapsed = (time.perf_counter() - t0) * 1000
-            rows.append([i, 'pop', elapsed])
+            rows.append(['pop', elapsed])
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
         flush(writer, rows)
@@ -222,14 +222,14 @@ def test_doc_insert():
     rows = []
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['index', 'elapsed_ms'])
+        writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS_JSON_DOCUMENT):
             key = generate_key_doc(i)
             doc = json.dumps({'payload': str(get_data(data, i)), 'counter': 0, 'tags': ['tag0', 'tag1']})
             t0 = time.perf_counter()
             client.set(key, doc)
             elapsed = (time.perf_counter() - t0) * 1000
-            rows.append([i, elapsed])
+            rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
         flush(writer, rows)
@@ -240,13 +240,13 @@ def test_doc_read():
     rows = []
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['index', 'elapsed_ms'])
+        writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS_JSON_DOCUMENT):
             key = generate_key_doc(i)
             t0 = time.perf_counter()
             json.loads(client.get(key))
             elapsed = (time.perf_counter() - t0) * 1000
-            rows.append([i, elapsed])
+            rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
         flush(writer, rows)
@@ -257,13 +257,13 @@ def test_doc_read_partial():
     rows = []
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['index', 'elapsed_ms'])
+        writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS_JSON_DOCUMENT):
             key = generate_key_doc(i)
             t0 = time.perf_counter()
             json.loads(client.get(key))['payload']
             elapsed = (time.perf_counter() - t0) * 1000
-            rows.append([i, elapsed])
+            rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
         flush(writer, rows)
@@ -274,7 +274,7 @@ def test_doc_update_partial():
     rows = []
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['index', 'elapsed_ms'])
+        writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS_JSON_DOCUMENT - 1, -1, -1):
             key = generate_key_doc(i)
             new_payload = str(get_data(data, i))
@@ -283,7 +283,7 @@ def test_doc_update_partial():
             doc['payload'] = new_payload
             client.set(key, json.dumps(doc))
             elapsed = (time.perf_counter() - t0) * 1000
-            rows.append([i, elapsed])
+            rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
         flush(writer, rows)
@@ -294,7 +294,7 @@ def test_doc_increment():
     rows = []
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['index', 'elapsed_ms'])
+        writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS_JSON_DOCUMENT):
             key = generate_key_doc(i)
             t0 = time.perf_counter()
@@ -302,7 +302,7 @@ def test_doc_increment():
             doc['counter'] += 1
             client.set(key, json.dumps(doc))
             elapsed = (time.perf_counter() - t0) * 1000
-            rows.append([i, elapsed])
+            rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
         flush(writer, rows)
@@ -313,13 +313,13 @@ def test_doc_delete():
     rows = []
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['index', 'elapsed_ms'])
+        writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS_JSON_DOCUMENT):
             key = generate_key_doc(i)
             t0 = time.perf_counter()
             client.delete(key)
             elapsed = (time.perf_counter() - t0) * 1000
-            rows.append([i, elapsed])
+            rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
         flush(writer, rows)
