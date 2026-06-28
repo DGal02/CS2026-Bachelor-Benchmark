@@ -15,7 +15,7 @@ PROCESS_COUNTS="1"
 ITERATIONS_LIST="10000"
 DATA_SIZES="small"
 CATEGORIES="insert read update delete mix queue doc_insert doc_read doc_read_partial doc_update_partial doc_increment doc_delete"
-FIXED_CATEGORIES="queue doc_insert doc_read doc_read_partial doc_update_partial doc_increment doc_delete"
+FIXED_CATEGORIES="mix queue doc_insert doc_read doc_read_partial doc_update_partial doc_increment doc_delete"
 
 contains() {
     for item in $1; do

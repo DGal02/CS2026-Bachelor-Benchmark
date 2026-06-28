@@ -4,7 +4,7 @@ import os
 import time
 import redis
 from benchmark.helper import load_data, generate_key, get_data, get_result_path, generate_key_mix, generate_queue_key, generate_key_doc, run, flush
-from benchmark.config.parameters import ITERATIONS, ITERATIONS_JSON_QUEUE_INSERTS, ITERATIONS_JSON_DOCUMENT, FLUSH_EVERY
+from benchmark.config.parameters import ITERATIONS, ITERATIONS_MIX, ITERATIONS_JSON_QUEUE_INSERTS, ITERATIONS_JSON_DOCUMENT, FLUSH_EVERY
 
 data = load_data()
 
@@ -92,7 +92,7 @@ def test_mix_50w_50r():
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(['operation', 'elapsed_ms'])
-        for i in range(ITERATIONS):
+        for i in range(ITERATIONS_MIX):
             key = generate_key_mix(i)
             payload = get_data(data, i)
             t0 = time.perf_counter()
@@ -117,7 +117,7 @@ def test_mix_90w_10r():
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(['operation', 'elapsed_ms'])
-        for i in range(ITERATIONS):
+        for i in range(ITERATIONS_MIX):
             if i % 10 == 9:
                 key = generate_key_mix(read_counter)
                 t0 = time.perf_counter()
@@ -141,12 +141,12 @@ def test_mix_90w_10r():
 def test_mix_10w_90r():
     result_path = get_result_path('mix_10W_90R')
     rows = []
-    write_counter = ITERATIONS * 9 // 10
-    read_counter = ITERATIONS // 10
+    write_counter = ITERATIONS_MIX * 9 // 10
+    read_counter = ITERATIONS_MIX // 10
     with open(result_path, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(['operation', 'elapsed_ms'])
-        for i in range(ITERATIONS):
+        for i in range(ITERATIONS_MIX):
             if i % 10 == 0:
                 key = generate_key_mix(write_counter)
                 payload = get_data(data, write_counter)
