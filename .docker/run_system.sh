@@ -7,16 +7,16 @@ export SYSTEM="redis"
 HOST_SYSTEM="wsl"
 MAX_CPUS_LIST="1 2"
 
-$COMPOSE build app
-
 for max_cpus in $MAX_CPUS_LIST; do
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] === Starting: system=$SYSTEM, MAX_CPUS=$max_cpus ==="
 
     TEST_RESULT_FOLDER=$(date '+%Y-%m-%d-%H-%M-%S')
     export TEST_RESULT_FOLDER
 
+    export MAX_CPUS="$max_cpus"
+    $COMPOSE build app
     $COMPOSE up -d app
-    MAX_CPUS="$max_cpus" $COMPOSE up -d "$SYSTEM"
+    $COMPOSE up -d "$SYSTEM"
 
     sh "$SCRIPT_DIR/run_tests.sh"
 
