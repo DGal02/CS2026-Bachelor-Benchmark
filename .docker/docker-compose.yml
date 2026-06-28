@@ -1,18 +1,21 @@
+networks:
+  benchmark-net:
+    driver: bridge
+
 services:
   app:
     build:
       context: ..
       dockerfile: .docker/Dockerfile
-    container_name: magisterka-app
-    depends_on:
-      redis:
-        condition: service_healthy
+    container_name: python-app
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
     volumes:
       - ../benchmark:/app/benchmark
       - ../testResult:/app/testResult
+    networks:
+      - benchmark-net
     restart: unless-stopped
 
   redis:
@@ -27,4 +30,10 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    networks:
+      - benchmark-net
+    deploy:
+      resources:
+        limits:
+          cpus: "${REDIS_CPUS}"
     restart: unless-stopped

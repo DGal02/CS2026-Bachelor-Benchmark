@@ -2,11 +2,55 @@
 set -e
 
 TEST_RESULT_FOLDER=$(date '+%Y-%m-%d-%H-%M-%S')
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+RESULT_DIR="$SCRIPT_DIR/../testResult/$TEST_RESULT_FOLDER"
 
-PROCESS_COUNTS="1 2 4 8"
-ITERATIONS_LIST="10000 100000 1000000"
-DATA_SIZES="small medium"
+#PROCESS_COUNTS="1 2 4 8"
+#ITERATIONS_LIST="10000 100000 1000000"
+#DATA_SIZES="small medium"
+#CATEGORIES="insert read update delete mix"
+PROCESS_COUNTS="1"
+ITERATIONS_LIST="10000"
+DATA_SIZES="small"
 CATEGORIES="insert read update delete mix"
+
+run_test() {
+    category=$1
+    data_size=$2
+    iterations=$3
+    count=$4
+
+    stats_dir="$RESULT_DIR/$data_size/$iterations/workers-$count"
+    mkdir -p "$stats_dir"
+
+    echo "timestamp,container,cpu_perc,mem_usage,mem_perc" > "$stats_dir/stats.csv"
+    while true; do
+        ts=$(date '+%Y-%m-%d %H:%M:%S')
+        docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.MemPerc}}" python-app magisterka-redis 2>/dev/null | while IFS= read -r line; do
+            echo "$ts,$line"
+        done >> "$stats_dir/stats.csv"
+        sleep 0.2
+    done &
+    monitor_pid=$!
+
+    pids=""
+    i=0
+    while [ $i -lt $count ]; do
+        docker exec \
+          -e TEST_RESULT_FOLDER="$TEST_RESULT_FOLDER" \
+          -e ITERATIONS="$iterations" \
+          -e DATA_SIZE="$data_size" \
+          -e MAX_WORKERS="$count" \
+          -e PROCESS_INDEX="$i" \
+          -e TEST_CATEGORY="$category" \
+          python-app python benchmark/redis_test.py &
+        pids="$pids $!"
+        i=$((i + 1))
+    done
+
+    wait $pids
+    kill "$monitor_pid" 2>/dev/null || true
+}
 
 run_category() {
     category=$1
@@ -17,24 +61,7 @@ run_category() {
 
     for count in $PROCESS_COUNTS; do
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting test run with $count process(es)..."
-
-        pids=""
-        i=0
-        while [ $i -lt $count ]; do
-            docker exec \
-              -e TEST_RESULT_FOLDER="$TEST_RESULT_FOLDER" \
-              -e ITERATIONS="$iterations" \
-              -e DATA_SIZE="$data_size" \
-              -e MAX_WORKERS="$count" \
-              -e PROCESS_INDEX="$i" \
-              -e TEST_CATEGORY="$category" \
-              magisterka-app python benchmark/redis_test.py &
-            pids="$pids $!"
-            i=$((i + 1))
-        done
-
-        wait $pids
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] All $count process(es) finished."
+        run_test "$category" "$data_size" "$iterations" "$count"
     done
 }
 
