@@ -1,7 +1,7 @@
 import json
 import os
 import numpy as np
-from benchmark.config.parameters import ARRAY_SIZE, TEST_RESULT_FOLDER, DATA_SIZE, ITERATIONS, MAX_WORKERS, PROCESS_INDEX
+from benchmark.config.parameters import ARRAY_SIZE, TEST_RESULT_FOLDER, DATA_SIZE, ITERATIONS, MAX_WORKERS, PROCESS_INDEX, TEST_CATEGORY
 
 
 key_prefix = 'benchmark'
