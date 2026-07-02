@@ -15,6 +15,7 @@ services:
       MEMCACHED_PORT: 11211
       LEVELDB_PATH: /data/leveldb
       ROCKSDB_PATH: /data/rocksdb
+      BERKELEYDB_PATH: /data/berkeleydb
     volumes:
       - ../benchmark:/app/benchmark
       - ../testResult:/app/testResult
