@@ -5,3 +5,4 @@ plyvel==1.5.1
 rocksdict==0.3.29
 berkeleydb==18.1.15
 foundationdb==7.4.6
+tarantool==1.2.0

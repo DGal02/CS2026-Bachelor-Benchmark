@@ -3,8 +3,8 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 COMPOSE="docker compose -f $SCRIPT_DIR/docker-compose.yml"
-#SYSTEM: redis memcached leveldb rocksdb berkeleydb foundationdb
-export SYSTEM="foundationdb"
+#SYSTEM: redis memcached leveldb rocksdb berkeleydb foundationdb tarantool
+export SYSTEM="tarantool"
 
 export EMBEDDED_SYSTEMS="leveldb rocksdb berkeleydb"
 

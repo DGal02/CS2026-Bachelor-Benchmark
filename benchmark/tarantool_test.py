@@ -1,16 +1,21 @@
 import csv
-import json
+import os
 import time
-import fdb
+import tarantool
 
-from benchmark.helper import load_data, generate_key, get_data, get_result_path, generate_key_mix, generate_key_doc, run, flush
-from benchmark.config.parameters import ITERATIONS, ITERATIONS_MIX, ITERATIONS_JSON_DOCUMENT, FLUSH_EVERY
+from benchmark.helper import load_data, generate_key, get_data, get_result_path, generate_key_mix, generate_queue_key, generate_key_doc, run, flush
+from benchmark.config.parameters import ITERATIONS, ITERATIONS_MIX, ITERATIONS_JSON_QUEUE_INSERTS, ITERATIONS_JSON_DOCUMENT, FLUSH_EVERY
 
 data = load_data()
 
-fdb.api_version(740)
-db = fdb.open()
-db.get(b'_warmup')
+conn = tarantool.Connection(
+    os.environ.get('TARANTOOL_HOST', 'localhost'),
+    int(os.environ.get('TARANTOOL_PORT', 3301)),
+)
+conn.ping()
+kv = conn.space('kv')
+doc_space = conn.space('doc')
+queue_space = conn.space('queue')
 
 
 
@@ -21,10 +26,10 @@ def test_insert():
         writer = csv.writer(f)
         writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS):
-            key = generate_key(i).encode()
-            payload = str(get_data(data, i)).encode()
+            key = generate_key(i)
+            payload = str(get_data(data, i))
             t0 = time.perf_counter()
-            db.set(key, payload)
+            kv.replace((key, payload))
             elapsed = (time.perf_counter() - t0) * 1000
             rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
@@ -39,9 +44,9 @@ def test_read():
         writer = csv.writer(f)
         writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS):
-            key = generate_key(i).encode()
+            key = generate_key(i)
             t0 = time.perf_counter()
-            db.get(key)
+            kv.select(key)
             elapsed = (time.perf_counter() - t0) * 1000
             rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
@@ -56,10 +61,10 @@ def test_update():
         writer = csv.writer(f)
         writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS - 1, -1, -1):
-            key = generate_key(i).encode()
-            payload = str(get_data(data, i)).encode()
+            key = generate_key(i)
+            payload = str(get_data(data, i))
             t0 = time.perf_counter()
-            db.set(key, payload)
+            kv.replace((key, payload))
             elapsed = (time.perf_counter() - t0) * 1000
             rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
@@ -74,9 +79,9 @@ def test_delete():
         writer = csv.writer(f)
         writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS):
-            key = generate_key(i).encode()
+            key = generate_key(i)
             t0 = time.perf_counter()
-            db.clear(key)
+            kv.delete(key)
             elapsed = (time.perf_counter() - t0) * 1000
             rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
@@ -91,17 +96,17 @@ def test_mix_50w_50r():
         writer = csv.writer(f)
         writer.writerow(['operation', 'elapsed_ms'])
         for i in range(ITERATIONS_MIX):
-            key = generate_key_mix(i).encode()
-            payload = str(get_data(data, i)).encode()
+            key = generate_key_mix(i)
+            payload = str(get_data(data, i))
             t0 = time.perf_counter()
-            db.set(key, payload)
+            kv.replace((key, payload))
             elapsed_write = (time.perf_counter() - t0) * 1000
             t1 = time.perf_counter()
-            db.get(key)
+            kv.select(key)
             elapsed_read = (time.perf_counter() - t1) * 1000
             rows.append(['write', elapsed_write])
             rows.append(['read', elapsed_read])
-            db.clear(key)
+            kv.delete(key)
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
         flush(writer, rows)
@@ -117,17 +122,17 @@ def test_mix_90w_10r():
         writer.writerow(['operation', 'elapsed_ms'])
         for i in range(ITERATIONS_MIX):
             if i % 10 == 9:
-                key = generate_key_mix(read_counter).encode()
+                key = generate_key_mix(read_counter)
                 t0 = time.perf_counter()
-                db.get(key)
+                kv.select(key)
                 elapsed = (time.perf_counter() - t0) * 1000
                 rows.append(['read', elapsed])
                 read_counter += 1
             else:
-                key = generate_key_mix(write_counter).encode()
-                payload = str(get_data(data, write_counter)).encode()
+                key = generate_key_mix(write_counter)
+                payload = str(get_data(data, write_counter))
                 t0 = time.perf_counter()
-                db.set(key, payload)
+                kv.replace((key, payload))
                 elapsed = (time.perf_counter() - t0) * 1000
                 rows.append(['write', elapsed])
                 write_counter += 1
@@ -146,21 +151,61 @@ def test_mix_10w_90r():
         writer.writerow(['operation', 'elapsed_ms'])
         for i in range(ITERATIONS_MIX):
             if i % 10 == 0:
-                key = generate_key_mix(write_counter).encode()
-                payload = str(get_data(data, write_counter)).encode()
+                key = generate_key_mix(write_counter)
+                payload = str(get_data(data, write_counter))
                 t0 = time.perf_counter()
-                db.set(key, payload)
+                kv.replace((key, payload))
                 elapsed = (time.perf_counter() - t0) * 1000
                 rows.append(['write', elapsed])
                 write_counter += 1
             else:
-                key = generate_key_mix(read_counter).encode()
+                key = generate_key_mix(read_counter)
                 t0 = time.perf_counter()
-                db.get(key)
+                kv.select(key)
                 elapsed = (time.perf_counter() - t0) * 1000
                 rows.append(['read', elapsed])
-                db.clear(key)
+                kv.delete(key)
                 read_counter += 1
+            if len(rows) >= FLUSH_EVERY:
+                flush(writer, rows)
+        flush(writer, rows)
+
+
+def test_queue():
+    result_path = get_result_path('queue')
+    queue_key = generate_queue_key()
+    push_counter = 0
+    phase1_ops = ITERATIONS_JSON_QUEUE_INSERTS * 3 // 2
+    remaining = ITERATIONS_JSON_QUEUE_INSERTS - ITERATIONS_JSON_QUEUE_INSERTS // 2
+    rows = []
+    with open(result_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['operation', 'elapsed_ms'])
+        for i in range(phase1_ops):
+            if i % 3 != 2:
+                receiver = f'test{push_counter}@test.pl'
+                message = {
+                    'sender': 'test@test.pl',
+                    'receiver': receiver,
+                    'message': f'Hello {receiver}.{get_data(data, push_counter)}.',
+                }
+                t0 = time.perf_counter()
+                queue_space.insert((queue_key, push_counter, message))
+                elapsed = (time.perf_counter() - t0) * 1000
+                rows.append(['push', elapsed])
+                push_counter += 1
+            else:
+                t0 = time.perf_counter()
+                conn.call('queue_pop', queue_key)
+                elapsed = (time.perf_counter() - t0) * 1000
+                rows.append(['pop', elapsed])
+            if len(rows) >= FLUSH_EVERY:
+                flush(writer, rows)
+        for _ in range(phase1_ops, phase1_ops + remaining):
+            t0 = time.perf_counter()
+            conn.call('queue_pop', queue_key)
+            elapsed = (time.perf_counter() - t0) * 1000
+            rows.append(['pop', elapsed])
             if len(rows) >= FLUSH_EVERY:
                 flush(writer, rows)
         flush(writer, rows)
@@ -173,10 +218,10 @@ def test_doc_insert():
         writer = csv.writer(f)
         writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS_JSON_DOCUMENT):
-            key = generate_key_doc(i).encode()
-            doc = json.dumps({'payload': str(get_data(data, i)), 'counter': 0, 'tags': ['tag0', 'tag1']}).encode()
+            key = generate_key_doc(i)
+            doc = {'payload': str(get_data(data, i)), 'counter': 0, 'tags': ['tag0', 'tag1']}
             t0 = time.perf_counter()
-            db.set(key, doc)
+            doc_space.replace((key, doc))
             elapsed = (time.perf_counter() - t0) * 1000
             rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
@@ -191,9 +236,9 @@ def test_doc_read():
         writer = csv.writer(f)
         writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS_JSON_DOCUMENT):
-            key = generate_key_doc(i).encode()
+            key = generate_key_doc(i)
             t0 = time.perf_counter()
-            json.loads(db.get(key))
+            doc_space.select(key)
             elapsed = (time.perf_counter() - t0) * 1000
             rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
@@ -208,9 +253,9 @@ def test_doc_read_partial():
         writer = csv.writer(f)
         writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS_JSON_DOCUMENT):
-            key = generate_key_doc(i).encode()
+            key = generate_key_doc(i)
             t0 = time.perf_counter()
-            json.loads(db.get(key))['payload']
+            conn.call('doc_get_field', key, 'payload')
             elapsed = (time.perf_counter() - t0) * 1000
             rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
@@ -225,12 +270,10 @@ def test_doc_update_partial():
         writer = csv.writer(f)
         writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS_JSON_DOCUMENT - 1, -1, -1):
-            key = generate_key_doc(i).encode()
+            key = generate_key_doc(i)
             new_payload = str(get_data(data, i))
             t0 = time.perf_counter()
-            doc = json.loads(db.get(key))
-            doc['payload'] = new_payload
-            db.set(key, json.dumps(doc).encode())
+            doc_space.update(key, [('=', 'doc.payload', new_payload)])
             elapsed = (time.perf_counter() - t0) * 1000
             rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
@@ -245,11 +288,9 @@ def test_doc_increment():
         writer = csv.writer(f)
         writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS_JSON_DOCUMENT):
-            key = generate_key_doc(i).encode()
+            key = generate_key_doc(i)
             t0 = time.perf_counter()
-            doc = json.loads(db.get(key))
-            doc['counter'] += 1
-            db.set(key, json.dumps(doc).encode())
+            doc_space.update(key, [('+', 'doc.counter', 1)])
             elapsed = (time.perf_counter() - t0) * 1000
             rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
@@ -264,9 +305,9 @@ def test_doc_delete():
         writer = csv.writer(f)
         writer.writerow(['elapsed_ms'])
         for i in range(ITERATIONS_JSON_DOCUMENT):
-            key = generate_key_doc(i).encode()
+            key = generate_key_doc(i)
             t0 = time.perf_counter()
-            db.clear(key)
+            doc_space.delete(key)
             elapsed = (time.perf_counter() - t0) * 1000
             rows.append([elapsed])
             if len(rows) >= FLUSH_EVERY:
@@ -280,7 +321,7 @@ CATEGORIES = {
     'update':            [test_update],
     'delete':            [test_delete],
     'mix':               [test_mix_50w_50r, test_mix_90w_10r, test_mix_10w_90r],
-    'queue':             [],
+    'queue':             [test_queue],
     'doc_insert':        [test_doc_insert],
     'doc_read':          [test_doc_read],
     'doc_read_partial':  [test_doc_read_partial],
