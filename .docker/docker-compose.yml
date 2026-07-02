@@ -14,6 +14,7 @@ services:
       MEMCACHED_HOST: memcached
       MEMCACHED_PORT: 11211
       LEVELDB_PATH: /data/leveldb
+      ROCKSDB_PATH: /data/rocksdb
     volumes:
       - ../benchmark:/app/benchmark
       - ../testResult:/app/testResult
