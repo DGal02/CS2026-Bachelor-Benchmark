@@ -16,21 +16,35 @@ services:
       LEVELDB_PATH: /data/leveldb
       ROCKSDB_PATH: /data/rocksdb
       BERKELEYDB_PATH: /data/berkeleydb
+      FDB_CLUSTER_FILE: /etc/foundationdb/fdb.cluster
     volumes:
       - ../benchmark:/app/benchmark
       - ../testResult:/app/testResult
     networks:
       - benchmark-net
-    deploy:
-      resources:
-        limits:
-          cpus: "${APP_CPUS}"
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: "${APP_CPUS}"
     restart: unless-stopped
 
   memcached:
     image: memcached:alpine
     container_name: system-memcached
     command: memcached -I 2m
+    networks:
+      - benchmark-net
+    deploy:
+      resources:
+        limits:
+          cpus: "${MAX_CPUS}"
+    restart: unless-stopped
+
+  foundationdb:
+    image: foundationdb/foundationdb:7.4.6
+    container_name: system-foundationdb
+    environment:
+      FDB_NETWORKING_MODE: container
     networks:
       - benchmark-net
     deploy:

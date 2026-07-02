@@ -3,8 +3,8 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 COMPOSE="docker compose -f $SCRIPT_DIR/docker-compose.yml"
-#SYSTEM: redis memcached leveldb
-export SYSTEM="leveldb"
+#SYSTEM: redis memcached leveldb rocksdb berkeleydb foundationdb
+export SYSTEM="foundationdb"
 
 export EMBEDDED_SYSTEMS="leveldb rocksdb berkeleydb"
 
@@ -32,6 +32,20 @@ for max_cpus in $MAX_CPUS_LIST; do
     $COMPOSE build app
     $COMPOSE up -d app
     is_embedded || $COMPOSE up -d "$SYSTEM"
+
+    if [ "$SYSTEM" = "foundationdb" ]; then
+        tries=0
+        until docker exec system-foundationdb fdbcli --exec "configure new single ssd" 2>/dev/null | grep -q "Database created"; do
+            tries=$((tries + 1))
+            if [ $tries -ge 30 ]; then
+                echo "FoundationDB: could not initialize DB" >&2
+                exit 1
+            fi
+            sleep 1
+        done
+        fdb_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' system-foundationdb)
+        docker exec python-app sh -c "mkdir -p /etc/foundationdb && echo 'docker:docker@$fdb_ip:4500' > /etc/foundationdb/fdb.cluster"
+    fi
 
     sleep 5
     sh "$SCRIPT_DIR/run_tests.sh"
