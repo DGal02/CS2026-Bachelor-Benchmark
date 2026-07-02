@@ -11,8 +11,11 @@ RESULT_DIR="$SCRIPT_DIR/../testResult/$TEST_RESULT_FOLDER"
 #CATEGORIES="insert read update delete mix queue doc_insert doc_read doc_read_partial doc_update_partial doc_increment doc_delete"
 # END OF CHOICES
 
-PROCESS_COUNTS="1"
-ITERATIONS_LIST="10000"
+#PROCESS_COUNTS="1"
+#ITERATIONS_LIST="10000"
+#DATA_SIZES="small"
+PROCESS_COUNTS="1 2 4 8"
+ITERATIONS_LIST="10000 100000 1000000"
 DATA_SIZES="small"
 CATEGORIES="insert read update delete mix queue doc_insert doc_read doc_read_partial doc_update_partial doc_increment doc_delete"
 
@@ -24,6 +27,12 @@ contains() {
     done
     return 1
 }
+
+if contains "$EMBEDDED_SYSTEMS" "$SYSTEM"; then
+    STATS_CONTAINERS="python-app"
+else
+    STATS_CONTAINERS="python-app system-$SYSTEM"
+fi
 
 run_test() {
     category=$1
@@ -37,7 +46,7 @@ run_test() {
     echo "timestamp,container,cpu_perc,mem_usage,block_io" > "$stats_dir/stats_${category}.csv"
     while true; do
         ts=$(date '+%Y-%m-%d %H:%M:%S')
-        docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.BlockIO}}" python-app "system-$SYSTEM" 2>/dev/null | while IFS= read -r line; do
+        docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.BlockIO}}" $STATS_CONTAINERS 2>/dev/null | while IFS= read -r line; do
             echo "$ts,$line"
         done >> "$stats_dir/stats_${category}.csv"
     done &

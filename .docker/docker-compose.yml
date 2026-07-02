@@ -13,11 +13,16 @@ services:
       REDIS_PORT: 6379
       MEMCACHED_HOST: memcached
       MEMCACHED_PORT: 11211
+      LEVELDB_PATH: /data/leveldb
     volumes:
       - ../benchmark:/app/benchmark
       - ../testResult:/app/testResult
     networks:
       - benchmark-net
+    deploy:
+      resources:
+        limits:
+          cpus: "${APP_CPUS}"
     restart: unless-stopped
 
   memcached:
