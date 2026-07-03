@@ -19,6 +19,10 @@ services:
       FDB_CLUSTER_FILE: /etc/foundationdb/fdb.cluster
       TARANTOOL_HOST: tarantool
       TARANTOOL_PORT: 3301
+      COUCHBASE_HOST: couchbase
+      COUCHBASE_USER: admin
+      COUCHBASE_PASSWORD: password
+      COUCHBASE_BUCKET: benchmark
     volumes:
       - ../benchmark:/app/benchmark
       - ../testResult:/app/testResult
@@ -48,6 +52,17 @@ services:
     container_name: system-foundationdb
     environment:
       FDB_NETWORKING_MODE: container
+    networks:
+      - benchmark-net
+    deploy:
+      resources:
+        limits:
+          cpus: "${MAX_CPUS}"
+    restart: unless-stopped
+
+  couchbase:
+    image: couchbase:community-8.0.1
+    container_name: system-couchbase
     networks:
       - benchmark-net
     deploy:

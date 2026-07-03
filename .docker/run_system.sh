@@ -3,8 +3,8 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 COMPOSE="docker compose -f $SCRIPT_DIR/docker-compose.yml"
-#SYSTEM: redis memcached leveldb rocksdb berkeleydb foundationdb tarantool
-export SYSTEM="tarantool"
+#SYSTEM: redis memcached leveldb rocksdb berkeleydb foundationdb tarantool couchbase
+export SYSTEM="couchbase"
 
 export EMBEDDED_SYSTEMS="leveldb rocksdb berkeleydb"
 
@@ -45,6 +45,23 @@ for max_cpus in $MAX_CPUS_LIST; do
         done
         fdb_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' system-foundationdb)
         docker exec python-app sh -c "mkdir -p /etc/foundationdb && echo 'docker:docker@$fdb_ip:4500' > /etc/foundationdb/fdb.cluster"
+    fi
+
+    if [ "$SYSTEM" = "couchbase" ]; then
+        tries=0
+        until docker exec system-couchbase couchbase-cli cluster-init -c localhost \
+            --cluster-username admin --cluster-password password \
+            --services data --cluster-ramsize 4096 >/dev/null 2>&1; do
+            tries=$((tries + 1))
+            if [ $tries -ge 60 ]; then
+                echo "Couchbase: could not initialize cluster" >&2
+                exit 1
+            fi
+            sleep 2
+        done
+        docker exec system-couchbase couchbase-cli bucket-create -c localhost \
+            -u admin -p password --bucket benchmark --bucket-type couchbase \
+            --bucket-ramsize 4096 --wait
     fi
 
     sleep 5

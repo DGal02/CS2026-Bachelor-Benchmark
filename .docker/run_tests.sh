@@ -4,6 +4,9 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULT_DIR="$SCRIPT_DIR/../testResult/$TEST_RESULT_FOLDER"
 
+
+trap 'kill $(jobs -p) 2>/dev/null || true' EXIT INT TERM
+
 # CHOICES
 #PROCESS_COUNTS="1 2 4 8"
 #ITERATIONS_LIST="10000 100000 1000000"
@@ -11,13 +14,14 @@ RESULT_DIR="$SCRIPT_DIR/../testResult/$TEST_RESULT_FOLDER"
 #CATEGORIES="insert read update delete mix queue doc_insert doc_read doc_read_partial doc_update_partial doc_increment doc_delete"
 # END OF CHOICES
 
-#PROCESS_COUNTS="1"
-#ITERATIONS_LIST="10000"
+PROCESS_COUNTS="1"
+ITERATIONS_LIST="100"
+DATA_SIZES="medium"
+#PROCESS_COUNTS="1 2 4 8"
+#ITERATIONS_LIST="10000 100000 1000000"
 #DATA_SIZES="small"
-PROCESS_COUNTS="1 2 4 8"
-ITERATIONS_LIST="10000 100000 1000000"
-DATA_SIZES="small"
-CATEGORIES="insert read update delete mix queue doc_insert doc_read doc_read_partial doc_update_partial doc_increment doc_delete"
+CATEGORIES="queue"
+#CATEGORIES="queue doc_insert doc_read doc_read_partial doc_update_partial doc_increment doc_delete"
 
 FIXED_CATEGORIES="mix queue doc_insert doc_read doc_read_partial doc_update_partial doc_increment doc_delete"
 
