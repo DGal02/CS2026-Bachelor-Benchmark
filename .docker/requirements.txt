@@ -6,3 +6,4 @@ rocksdict==0.3.29
 berkeleydb==18.1.15
 foundationdb==7.4.6
 tarantool==1.2.0
+couchbase==4.6.2
